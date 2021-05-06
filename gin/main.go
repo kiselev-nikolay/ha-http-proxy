@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kiselev-nikolay/ha-http-proxy/light/pkg/trace"
@@ -22,8 +25,14 @@ type response struct {
 	Headers map[string]string `json:"headers"`
 }
 
+type traffic struct {
+	Req *request
+	Res *response
+}
+
 func main() {
 	r := gin.Default()
+	trafficData := make(map[string]traffic)
 	r.POST("/proxy", func(g *gin.Context) {
 		req := &request{}
 		err := g.BindJSON(req)
@@ -41,7 +50,7 @@ func main() {
 		}
 		traceID := trace.GetID()
 		reqHeaders.Add("X-Hhp-Trace-Id", traceID)
-		res, err := http.DefaultClient.Do(&http.Request{
+		proxyRes, err := http.DefaultClient.Do(&http.Request{
 			Method: req.Method,
 			URL:    url,
 			Header: reqHeaders,
@@ -51,20 +60,29 @@ func main() {
 			return
 		}
 		resHeaders := make(map[string]string)
-		for k, v := range res.Header {
+		for k, v := range proxyRes.Header {
 			resHeaders[k] = v[0]
 		}
 		length := 0
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := ioutil.ReadAll(proxyRes.Body)
 		if err == nil {
 			length = len(responseBody)
 		}
-		g.JSON(200, response{
+		res := &response{
 			ID:      traceID,
-			Status:  res.StatusCode,
+			Status:  proxyRes.StatusCode,
 			Headers: resHeaders,
 			Length:  length,
-		})
+		}
+		g.JSON(200, res)
+		trafficData[traceID] = traffic{
+			Req: req,
+			Res: res,
+		}
 	})
-	r.Run()
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	go r.Run()
+	<-stop
+	fmt.Printf("%+v", trafficData)
 }
