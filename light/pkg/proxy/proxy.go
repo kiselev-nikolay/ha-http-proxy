@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -12,28 +13,49 @@ import (
 	"github.com/kiselev-nikolay/ha-http-proxy/light/pkg/trace"
 )
 
-func Run(addr string, loggingEnabled bool) error {
+type Context struct {
+	Addr           string
+	LoggingEnabled bool
+	Traffic        *Traffic
+	context.Context
+}
+
+type Traffic struct {
+	Records map[string]TrafficRecord
+}
+
+type TrafficRecord struct {
+	Req Request
+	Res Response
+}
+
+func Run(ctx *Context) error {
+	ctx.Traffic = &Traffic{Records: make(map[string]TrafficRecord)}
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 	handler := &Handler{
 		DoRequest:      client.Do,
-		LoggingEnabled: loggingEnabled,
+		LoggingEnabled: ctx.LoggingEnabled,
+		Traffic:        ctx.Traffic,
 	}
 	server := &http.Server{
-		Addr:           addr,
+		Addr:           ctx.Addr,
 		Handler:        handler,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	err := server.ListenAndServe()
+	go server.ListenAndServe()
+	<-ctx.Done()
+	err := server.Shutdown(ctx)
 	return err
 }
 
 type Handler struct {
 	DoRequest      func(req *http.Request) (*http.Response, error)
 	LoggingEnabled bool
+	Traffic        *Traffic
 }
 
 func (h *Handler) logOK(resJSON *json.Encoder, req *http.Request, response *Response) {
@@ -138,4 +160,10 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 	rw.WriteHeader(200)
 	h.logOK(resJSON, req, response)
+	if h.Traffic != nil {
+		h.Traffic.Records[traceID] = TrafficRecord{
+			*request,
+			*response,
+		}
+	}
 }
