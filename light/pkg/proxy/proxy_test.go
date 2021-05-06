@@ -180,3 +180,26 @@ func TestServerError(t *testing.T) {
 	}
 	assertBody(t, `{"errors":["request failed"]}`, res)
 }
+
+func TestTraceIdPresent(t *testing.T) {
+	var traceID string
+	h := &proxy.Handler{DoRequest: func(req *http.Request) (*http.Response, error) {
+		if req.Header.Get("X-Hhp-Trace-Id") == "" {
+			t.Fail()
+		}
+		traceID = req.Header.Get("X-Hhp-Trace-Id")
+		return &http.Response{StatusCode: 200}, nil
+	}}
+	ts := httptest.NewServer(h)
+	defer ts.Close()
+	body, _ := json.Marshal(&proxy.Request{Method: "GET", RawURL: "http://test.com"})
+	rawRes, _ := http.Post(ts.URL, "application/json", bytes.NewBuffer(body))
+	res := &proxy.Response{}
+	json.NewDecoder(rawRes.Body).Decode(res)
+	if len(res.ID) != 32 {
+		t.Errorf(`Got invalid id in response, got %s`, res.ID)
+	}
+	if traceID != res.ID {
+		t.Errorf(`Got wrong id in response got %s; must %s`, res.ID, traceID)
+	}
+}

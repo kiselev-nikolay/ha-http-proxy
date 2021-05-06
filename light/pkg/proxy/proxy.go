@@ -110,6 +110,8 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for k, v := range request.Headers {
 		httpReq.Header.Add(k, v)
 	}
+	traceID := trace.GetID()
+	httpReq.Header.Add("X-Hhp-Trace-Id", traceID)
 	res, err := h.DoRequest(httpReq)
 	if err != nil {
 		rw.WriteHeader(502)
@@ -118,13 +120,15 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	length := 0
-	responseBody, err := ioutil.ReadAll(res.Body)
-	if err == nil {
-		length = len(responseBody)
+	if res.Body != nil {
+		responseBody, err := ioutil.ReadAll(res.Body)
+		if err == nil {
+			length = len(responseBody)
+		}
 	}
 
 	response := &Response{
-		ID:      trace.GetID(),
+		ID:      traceID,
 		Status:  res.StatusCode,
 		Length:  length,
 		Headers: make(map[string]string),
