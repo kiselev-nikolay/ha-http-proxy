@@ -9,7 +9,7 @@ import (
 	"os/signal"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kiselev-nikolay/ha-http-proxy/light/pkg/trace"
+	"github.com/kiselev-nikolay/ha-http-proxy/pure/pkg/trace"
 )
 
 type request struct {
