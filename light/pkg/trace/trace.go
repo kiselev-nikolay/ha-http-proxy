@@ -8,13 +8,13 @@ import (
 	"math"
 )
 
-func GetIDWithLenght(lenght int) string {
-	if lenght <= 0 {
+func GetIDWithLength(length int) string {
+	if length <= 0 {
 		return ""
 	}
 
 	// to minimize unnecessary work, we take only as many bytes as needed
-	size := 2 + math.Ceil(float64(lenght)*3/4)
+	size := 2 + math.Ceil(float64(length)*3/4)
 	data := make([]byte, int(size))
 	_, err := rand.Read(data)
 	if err != nil {
@@ -37,10 +37,10 @@ func GetIDWithLenght(lenght int) string {
 	// since calculating the length of a input random array can be one character more
 	// its better to truncate buffer
 	randomString := buf.String()
-	id := randomString[:lenght]
+	id := randomString[:length]
 	return id
 }
 
 func GetID() string {
-	return GetIDWithLenght(32)
+	return GetIDWithLength(32)
 }

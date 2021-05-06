@@ -19,12 +19,12 @@ func TestGetID(t *testing.T) {
 }
 
 func TestGetIDWith(t *testing.T) {
-	for lenght := 0; lenght < 2^16; lenght++ {
-		testname := fmt.Sprintf("with lenght = %d", lenght)
+	for length := 0; length < 2^16; length++ {
+		testname := fmt.Sprintf("with length = %d", length)
 		t.Run(testname, func(t *testing.T) {
-			id := trace.GetIDWithLenght(lenght)
-			if len(id) != lenght {
-				t.Errorf("id = '%s', len(id) = %d; want string with len() = %d", id, len(id), lenght)
+			id := trace.GetIDWithLength(length)
+			if len(id) != length {
+				t.Errorf("id = '%s', len(id) = %d; want string with len() = %d", id, len(id), length)
 			}
 		})
 	}
