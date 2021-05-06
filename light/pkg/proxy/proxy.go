@@ -3,19 +3,22 @@ package proxy
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/kiselev-nikolay/ha-http-proxy/light/pkg/trace"
 )
 
-func Run(addr string) error {
+func Run(addr string, loggingEnabled bool) error {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 	handler := &Handler{
-		DoRequest: client.Do,
+		DoRequest:      client.Do,
+		LoggingEnabled: loggingEnabled,
 	}
 	server := &http.Server{
 		Addr:           addr,
@@ -29,7 +32,25 @@ func Run(addr string) error {
 }
 
 type Handler struct {
-	DoRequest func(req *http.Request) (*http.Response, error)
+	DoRequest      func(req *http.Request) (*http.Response, error)
+	LoggingEnabled bool
+}
+
+func (h *Handler) logOK(resJSON *json.Encoder, req *http.Request, response *Response) {
+	resJSON.Encode(response)
+	if h.LoggingEnabled {
+		log.Printf("%v | %v | OK: %v", req.Method, req.RemoteAddr, response.ID)
+	}
+}
+
+func (h *Handler) sendErr(resJSON *json.Encoder, req *http.Request, errors []string) {
+	errorRes := &ErrResponse{
+		Errors: errors,
+	}
+	resJSON.Encode(errorRes)
+	if h.LoggingEnabled {
+		log.Printf("%v | %v | Fail: %v", req.Method, req.RemoteAddr, strings.Join(errors, ","))
+	}
 }
 
 type Request struct {
@@ -58,9 +79,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	err := reqJSON.Decode(request)
 	if err != nil {
 		rw.WriteHeader(400)
-		resJSON.Encode(&ErrResponse{
-			Errors: []string{"json body decode error"},
-		})
+		h.sendErr(resJSON, req, []string{"json body decode error"})
 		return
 	}
 
@@ -79,9 +98,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 	if len(validationErrors) > 0 {
 		rw.WriteHeader(400)
-		resJSON.Encode(&ErrResponse{
-			Errors: validationErrors,
-		})
+		h.sendErr(resJSON, req, validationErrors)
 		return
 	}
 
@@ -96,9 +113,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	res, err := h.DoRequest(httpReq)
 	if err != nil {
 		rw.WriteHeader(502)
-		resJSON.Encode(&ErrResponse{
-			Errors: []string{"request failed"},
-		})
+		h.sendErr(resJSON, req, []string{"request failed"})
 		return
 	}
 
@@ -118,5 +133,5 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		response.Headers[k] = v[0]
 	}
 	rw.WriteHeader(200)
-	resJSON.Encode(response)
+	h.logOK(resJSON, req, response)
 }

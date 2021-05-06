@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "url": "http://google.com",
+  "headers": {
+    "Authentication": "Basic bG9naW46cGFzc3dvcmQ="
+  }
+}
