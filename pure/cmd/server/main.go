@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"sync"
 
-	"github.com/kiselev-nikolay/ha-http-proxy/light/pkg/proxy"
+	"github.com/kiselev-nikolay/ha-http-proxy/pure/pkg/proxy"
 )
 
 func main() {

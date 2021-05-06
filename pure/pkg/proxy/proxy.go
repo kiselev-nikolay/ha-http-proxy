@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kiselev-nikolay/ha-http-proxy/light/pkg/trace"
+	"github.com/kiselev-nikolay/ha-http-proxy/pure/pkg/trace"
 )
 
 type Context struct {

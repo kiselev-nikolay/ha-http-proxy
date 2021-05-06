@@ -27,5 +27,5 @@ Server forms valid HTTP-request to 3rd-party service with data from client's mes
 
 ## Contents
 
-+ Implementation using only the standard library ➡ [kiselev-nikolay/ha-http-proxy/light](http://github.com/kiselev-nikolay/ha-http-proxy/light)
++ Implementation using only the standard library ➡ [kiselev-nikolay/ha-http-proxy/pure](http://github.com/kiselev-nikolay/ha-http-proxy/pure)
 + Implementation using only the gin gonic framework ➡ [kiselev-nikolay/ha-http-proxy/gin](http://github.com/kiselev-nikolay/ha-http-proxy/gin)

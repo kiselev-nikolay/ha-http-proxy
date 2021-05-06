@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kiselev-nikolay/ha-http-proxy/light/pkg/proxy"
+	"github.com/kiselev-nikolay/ha-http-proxy/pure/pkg/proxy"
 )
 
 func makeMock(code int, header map[string]string, body string) func(req *http.Request) (*http.Response, error) {

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/kiselev-nikolay/ha-http-proxy/light/pkg/trace"
+	"github.com/kiselev-nikolay/ha-http-proxy/pure/pkg/trace"
 )
 
 const idRegExp = `^[A-z0-9+\/]+$`
