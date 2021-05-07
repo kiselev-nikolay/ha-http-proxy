@@ -9,7 +9,7 @@ import (
 	"os/signal"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kiselev-nikolay/ha-http-proxy/pure/pkg/trace"
+	"github.com/kiselev-nikolay/ha-http-proxy/gin/trace"
 )
 
 type request struct {
@@ -26,8 +26,8 @@ type response struct {
 }
 
 type traffic struct {
-	Req *request
-	Res *response
+	Req request
+	Res response
 }
 
 func main() {
@@ -48,7 +48,7 @@ func main() {
 		for k, v := range req.Headers {
 			reqHeaders.Add(k, v)
 		}
-		traceID := trace.GetID()
+		traceID := trace.GenerateID()
 		reqHeaders.Add("X-Hhp-Trace-Id", traceID)
 		proxyRes, err := http.DefaultClient.Do(&http.Request{
 			Method: req.Method,
@@ -76,12 +76,12 @@ func main() {
 		}
 		g.JSON(200, res)
 		trafficData[traceID] = traffic{
-			Req: req,
-			Res: res,
+			Req: *req,
+			Res: *res,
 		}
 	})
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, os.Interrupt, os.Kill)
 	go r.Run()
 	<-stop
 	fmt.Printf("%+v", trafficData)
