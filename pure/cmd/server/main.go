@@ -12,15 +12,17 @@ import (
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+	defer stop()
+
 	proxyCtx := &proxy.Context{
-		Addr:   ":8080",
-		Logger: log.Default(),
+		Addr:    ":8080",
+		Logger:  log.Default(),
+		Context: ctx,
 	}
-	ctxWithTimeout, cancel := context.WithCancel(context.Background())
-	proxyCtx.Context = ctxWithTimeout
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+
 	wg := sync.WaitGroup{}
+
 	wg.Add(1)
 	go func() {
 		err := proxy.Run(proxyCtx)
@@ -29,8 +31,9 @@ func main() {
 		}
 		wg.Done()
 	}()
-	<-stop
-	cancel()
+
+	<-proxyCtx.Done()
 	wg.Wait()
+
 	fmt.Printf("%+v", proxyCtx.Traffic)
 }
