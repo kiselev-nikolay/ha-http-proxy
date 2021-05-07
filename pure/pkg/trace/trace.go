@@ -8,7 +8,7 @@ import (
 	"math"
 )
 
-func GetIDWithLength(length int) string {
+func GenerateIDWithLength(length int) string {
 	if length <= 0 {
 		return ""
 	}
@@ -19,7 +19,7 @@ func GetIDWithLength(length int) string {
 	_, err := rand.Read(data)
 	if err != nil {
 		// rand.Read error is allways nil
-		log.Printf("trace.GetID unexpected error: %v", err)
+		log.Printf("trace.GenerateID unexpected error: %v", err)
 		return ""
 	}
 
@@ -30,7 +30,7 @@ func GetIDWithLength(length int) string {
 	_, err = encoder.Write(data)
 	if err != nil {
 		// encoder.Write error is allways nil
-		log.Printf("trace.GetID unexpected error: %v", err)
+		log.Printf("trace.GenerateID unexpected error: %v", err)
 		return ""
 	}
 
@@ -41,6 +41,6 @@ func GetIDWithLength(length int) string {
 	return id
 }
 
-func GetID() string {
-	return GetIDWithLength(32)
+func GenerateID() string {
+	return GenerateIDWithLength(32)
 }
