@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,10 +12,14 @@ import (
 	"github.com/kiselev-nikolay/ha-http-proxy/pure/pkg/trace"
 )
 
+type Logger interface {
+	Printf(format string, v ...interface{})
+}
+
 type Context struct {
-	Addr           string
-	LoggingEnabled bool
-	Traffic        *Traffic
+	Addr    string
+	Logger  Logger
+	Traffic *Traffic
 	context.Context
 }
 
@@ -35,9 +38,9 @@ func Run(ctx *Context) error {
 		Timeout: 10 * time.Second,
 	}
 	handler := &Handler{
-		DoRequest:      client.Do,
-		LoggingEnabled: ctx.LoggingEnabled,
-		Traffic:        ctx.Traffic,
+		DoRequest: client.Do,
+		Logger:    ctx.Logger,
+		Traffic:   ctx.Traffic,
 	}
 	server := &http.Server{
 		Addr:           ctx.Addr,
@@ -53,15 +56,15 @@ func Run(ctx *Context) error {
 }
 
 type Handler struct {
-	DoRequest      func(req *http.Request) (*http.Response, error)
-	LoggingEnabled bool
-	Traffic        *Traffic
+	DoRequest func(req *http.Request) (*http.Response, error)
+	Logger    Logger
+	Traffic   *Traffic
 }
 
 func (h *Handler) logOK(resJSON *json.Encoder, req *http.Request, response *Response) {
 	resJSON.Encode(response)
-	if h.LoggingEnabled {
-		log.Printf("%v | %v | OK: %v", req.Method, req.RemoteAddr, response.ID)
+	if h.Logger != nil {
+		h.Logger.Printf("%v | %v | OK: %v", req.Method, req.RemoteAddr, response.ID)
 	}
 }
 
@@ -70,8 +73,8 @@ func (h *Handler) sendErr(resJSON *json.Encoder, req *http.Request, errors []str
 		Errors: errors,
 	}
 	resJSON.Encode(errorRes)
-	if h.LoggingEnabled {
-		log.Printf("%v | %v | Fail: %v", req.Method, req.RemoteAddr, strings.Join(errors, ","))
+	if h.Logger != nil {
+		h.Logger.Printf("%v | %v | Fail: %v", req.Method, req.RemoteAddr, strings.Join(errors, ","))
 	}
 }
 

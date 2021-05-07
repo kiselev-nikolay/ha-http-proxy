@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -12,8 +13,8 @@ import (
 
 func main() {
 	proxyCtx := &proxy.Context{
-		Addr:           ":8080",
-		LoggingEnabled: true,
+		Addr:   ":8080",
+		Logger: log.Default(),
 	}
 	ctxWithTimeout, cancel := context.WithCancel(context.Background())
 	proxyCtx.Context = ctxWithTimeout
