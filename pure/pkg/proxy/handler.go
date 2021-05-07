@@ -83,7 +83,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for k, v := range request.Headers {
 		httpReq.Header.Add(k, v)
 	}
-	traceID := trace.GetID()
+	traceID := trace.GenerateID()
 	httpReq.Header.Add("X-Hhp-Trace-Id", traceID)
 	res, err := h.DoRequest(httpReq)
 	if err != nil {
