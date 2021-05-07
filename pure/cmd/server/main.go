@@ -15,18 +15,14 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer stop()
 
-	proxyCtx := &proxy.Context{
-		Addr:    ":8080",
-		Logger:  log.Default(),
-		Context: ctx,
-	}
+	proxyCtx := proxy.NewContext(ctx, ":8080", log.Default())
+	proxyServer := proxy.NewServer(proxyCtx)
 
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
 	go func() {
-		err := proxy.Run(proxyCtx)
-		if err != nil {
+		if err := proxyServer.Run(proxyCtx); err != nil {
 			fmt.Println(err)
 		}
 		wg.Done()
