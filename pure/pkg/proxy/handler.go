@@ -94,6 +94,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	length := 0
 	if res.Body != nil {
+		defer res.Body.Close()
 		responseBody, err := ioutil.ReadAll(res.Body)
 		if err == nil {
 			length = len(responseBody)
